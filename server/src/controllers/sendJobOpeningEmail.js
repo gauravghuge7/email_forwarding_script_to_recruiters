@@ -12,10 +12,10 @@ const sendJobOpeningEmail = promiseWrap(async(req, res, next) => {
 
    try {
 
-      const { hrEmails, companyName, subject } = req.body;
+      const { hrEmails, subject } = req.body;
       console.log("req.body => ", req.body);
 
-      if(!hrEmails || !companyName || !subject) {
+      if(!hrEmails || !subject) {
          return res
          .status(400)
          .json({ message: "Missing required fields." });
@@ -27,13 +27,18 @@ const sendJobOpeningEmail = promiseWrap(async(req, res, next) => {
 
       let response = "";
 
-      for(let i=0; i<hrEmails?.length; i++) {
+      /*** As A Array  */
+
+      // for(let i=0; i<hrEmails.length; i++) {
 
          
-         response = await sendOTPEmail(hrEmails[i].email, subject, resume, template, companyName, hrEmails[i].name);
-         console.log("response => ", response);
-      }
+      //    response = await sendOTPEmail(hrEmails[i].email, subject, resume, template, hrEmails[i].company, hrEmails[i].name);
+      //    console.log("response => ", response);
+      // }
       
+
+      /*** As A Object  */
+      response = await sendOTPEmail(hrEmails.email, subject, resume, template, hrEmails.company, hrEmails.name);
 
       return res
       .status(200)

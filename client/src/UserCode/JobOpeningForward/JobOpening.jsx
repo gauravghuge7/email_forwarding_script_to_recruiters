@@ -10,12 +10,15 @@ const JobOpening = () => {
   const [subject, setSubject] = useState("");
   const [hrName, setHrName] = useState("");
   const [hrEmail, setHrEmail] = useState("");
-  const [emails, setEmails] = useState([]); // Array of objects { name, email }
+  const [emails, setEmails] = useState([]); // Array of objects { name, email, company }
   const [resumeFile, setResumeFile] = useState(null);
   const [templateFile, setTemplateFile] = useState(null);
   const [emailPreview, setEmailPreview] = useState("");
   const [loading, setLoading] = useState("");
   const [isSending, setIsSending] = useState(false);
+
+  const [currentCount, setCurrentCount] = useState(0);
+  const [progress, setProgress] = useState(0);
 
   /** Functions for the validation and sending emails */
   const addEmail = () => {
@@ -29,11 +32,17 @@ const JobOpening = () => {
       return;
     }
 
-    const newEntry = { name: hrName, email: hrEmail };
+    if(!companyName.trim()) {
+      alert("Please enter the company name.");
+      return;
+    }
+
+    const newEntry = { name: hrName, email: hrEmail, company: companyName };
     if (!emails.some((entry) => entry.email === hrEmail)) {
       setEmails((prevEmails) => [...prevEmails, newEntry]);
       setHrName(""); // Clear input after adding
       setHrEmail("");
+      setCompanyName("");
     }
   };
 
@@ -64,6 +73,7 @@ const JobOpening = () => {
   // Send Email Handler
   const sendEmail = async () => {
     try {
+
       if (emails.length === 0) {
         alert("Please enter at least one HR name and email.");
         return;
@@ -74,14 +84,11 @@ const JobOpening = () => {
         return;
       }
 
+      setIsSending(true);
+      setCurrentCount(0); // Reset the count
+      setProgress(0); // Reset the progress bar
 
-      const body = {
-        companyName : companyName,
-        subject : subject,
-        hrEmails : emails,
-        resume : resumeFile,
-        template: templateFile,
-      }
+      
 
       const config = {
         headers: {
@@ -90,18 +97,36 @@ const JobOpening = () => {
         withCredentials: true,
       };
 
-      setIsSending(true);
 
-      const response = await axios.post("/api/sendJobOpeningEmail", body, config);
-      console.log(response.data);
 
-      if(response.data.success) {
+      for (let i = 0; i < emails.length; i++) {
 
-        const emailBody = response.data.emailBody;
-        setEmailPreview(emailBody);
-        toast.success("Email sent successfully to Emails.");
-        setIsSending(false);
+        const email = emails[i];
+        
+        const body = {
+          subject : subject,
+          hrEmails : email,
+          resume : resumeFile,
+          template: templateFile,
+        }
+        
+  
+        await axios.post("/api/sendJobOpeningEmail", body, config);
+  
+        // Update progress and increment the email count
+        setCurrentCount((prevCount) => prevCount + 1);
+        setProgress(((i + 1) / emails.length) * 100); // Calculate progress in percentage
       }
+
+      // if(response.data.success) {
+
+      //   const emailBody = response.data.emailBody;
+      //   setEmailPreview(emailBody);
+      //   toast.success("Email sent successfully to Emails.");
+      //   setIsSending(false);
+      // }
+
+      toast.success("Emails sent successfully.");
 
     } 
     catch (error) {
@@ -193,6 +218,19 @@ const JobOpening = () => {
 
           <div className="mb-4">
             <label className="block text-gray-700 font-semibold mb-2">
+              Subject
+            </label>
+            <input
+              type="text"
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              placeholder="Enter subject"
+              className="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-gray-700 font-semibold mb-2">
               Company Name
             </label>
             <input
@@ -204,18 +242,7 @@ const JobOpening = () => {
             />
           </div>
           
-          <div className="mb-4">
-            <label className="block text-gray-700 font-semibold mb-2">
-              Subject
-            </label>
-            <input
-              type="text"
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-              placeholder="Enter subject"
-              className="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+          
 
           <div className="mb-4">
             <label className="block text-gray-700 font-semibold mb-2">
@@ -289,7 +316,7 @@ const JobOpening = () => {
                   className="flex justify-between items-center bg-gray-100 p-2 rounded-lg shadow"
                 >
                   <span>
-                    {index + 1}. {entry.name} ({entry.email})
+                    {index + 1}. {entry.name} ({entry.email}) - {entry.company}
                   </span>
                   <button
                     onClick={() => removeEmail(index)}
@@ -315,8 +342,7 @@ const JobOpening = () => {
         >
           Send Email
         </button>
-        {
-          isSending && (
+        {isSending && (
           <div className="mt-4">
             <div
               className="h-2 bg-gray-300 rounded"
@@ -328,12 +354,12 @@ const JobOpening = () => {
               <div
                 className="h-2 bg-green-600 rounded"
                 style={{
-                  width: `0%`,
+                  width: `${progress}%`,
                   transition: "width 0.2s ease-in-out", // Smooth transition
                 }}
               />
             </div>
-            <p className="text-center mt-2 text-sm text-gray-500">{`Progress: 100%`}</p>
+            <p className="text-center mt-2 text-sm text-gray-500">{`Progress: ${Math.round(progress)}%`}</p>
           </div>
         )}
 
