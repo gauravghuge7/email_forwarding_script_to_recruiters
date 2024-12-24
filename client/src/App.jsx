@@ -10,6 +10,7 @@ function App() {
   return (
     <>
       <Routes>
+        
         <Route path="/*" element={<Router />} />
         <Route path="*" element={<NotFound />} />
 
