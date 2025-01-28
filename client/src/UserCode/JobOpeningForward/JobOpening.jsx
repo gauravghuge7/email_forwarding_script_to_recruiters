@@ -111,20 +111,23 @@ const JobOpening = () => {
         }
         
   
-        await axios.post("/api/sendJobOpeningEmail", body, config);
-  
+        const response = await axios.post("/api/sendJobOpeningEmail", body, config);
+
+        console.log("response => ", response);
+
         // Update progress and increment the email count
         setCurrentCount((prevCount) => prevCount + 1);
         setProgress(((i + 1) / emails.length) * 100); // Calculate progress in percentage
+
+        setTimeout(() => {
+          console.log("currentCount => ", currentCount);
+          console.log("progress => ", progress);
+        }, 1000);
+
+        
       }
 
-      // if(response.data.success) {
-
-      //   const emailBody = response.data.emailBody;
-      //   setEmailPreview(emailBody);
-      //   toast.success("Email sent successfully to Emails.");
-      //   setIsSending(false);
-      // }
+      
 
       toast.success("Emails sent successfully.");
 
@@ -287,6 +290,7 @@ const JobOpening = () => {
               accept=".pdf"
               onChange={handleResumeUpload}
               className="w-full border border-gray-300 rounded-lg p-2 focus:outline-none"
+              required
             />
           </div>
 
